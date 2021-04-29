@@ -131,3 +131,4 @@ dmypy.json
 # Private Config or Logs
 *.cfg
 *.logs
+*.service
