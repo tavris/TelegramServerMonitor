@@ -1,0 +1,15 @@
+[Unit]
+Description=Telegram Monitoring service
+After=syslog.target
+
+[Service]
+Type=forking
+ExecStart=/usr/bin/python3 /opt/TelegramMonitoring/teleMonitor.py -d
+Restart=on-failure
+RestartSec=5s
+PIDFile=/var/run/teleMonitor.pid
+WorkingDirectory=/opt/TelegramMonitoring/
+ExecStop=/bin/kill $MAINPID
+
+[Install]
+WantedBy=multi-user.target
