@@ -129,5 +129,5 @@ dmypy.json
 .pyre/
 
 # Private Config or Logs
-.cfg
-.logs
+*.cfg
+*.logs
