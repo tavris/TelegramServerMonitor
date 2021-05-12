@@ -1,14 +1,10 @@
-import os, sys, platform, signal, argparse, logging, threading, time;
-
-import telegram;
-from telegram.ext import Updater, CommandHandler, CallbackContext;
+import os, sys, platform, signal, argparse, logging, multiprocessing, threading, time;
 
 from cMonitor import cMonitor;
+from cTelegram import cTelegram;
 from teleHandler import *;
 
-global tele;
 global logmon;
-global monThread;
 global logger;
 
 # LOG FOR MONITOER #
@@ -25,147 +21,148 @@ class cLogMonitor:
 		pass;
 # LOG FOR MONITOER #
 
-# TELEGRAM BOT ASSIST CLASS #
-class cTelegramBot:
-	__bot = None;
-	__botCid = None;
-	__updater = None;
-	__masterList = [];
-
-	def __init__(self, key, masters=None, cid=None):
-		try:
-			self.__bot = telegram.Bot(token=key);
-			self.__updater = Updater(token=key);
-			self.__updater.dispatcher.add_error_handler(onCommonErrorHandler);
-			self.__masterList = masters;
-
-			if(cid is not None):	self.__botCid = cid;
-			elif(cid is None and self.__masterList):	self.__botCid = self.__masterList[0];
-			else:	self.__botCid = self.__bot.getUpdates()[-1].message.chat.id;
-		except Exception as e:	logger.error(e);
-		pass;
-
-	def __del__(self):
-		try:	self.__updater.stop();
-		except Exception as e:	logger.error(e);
-		pass;
-
-	## Start ##
-	def start(self):
-		self.__updater.start_polling();
-		self.__updater.idle();
-
-	def getJob(self):
-		return self.__updater.job_queue;
-
-	## Reg new update command ##
-	def setUpdaterEvent(self, event, function, pass_args=False):
-		logger.debug("  - Adding handler for Telegram comment event. (cmd : %s)" % event);
-		self.__updater.dispatcher.add_handler(CommandHandler(event, function, pass_args=pass_args));
-
-	def botSendMessage(self, msg):	self.__bot.sendMessage(chat_id=self.__botCid, text=msg);
-	def botReplyMessage(self, msg):	self.__updater.message.reply_text(msg);
-
-	def botCmdSecure(self, update):
-		logger.debug(update.message.from_user.id in self.__masterList);
-		if(not self.__masterList or update.message.from_user.id in self.__masterList):	return True;
-		else:	return False;
-# TELEGRAM BOT ASSIST CLASS #
 
 # TIMMER`S FUNCTION #
-def THRTIME_monitoringCPU():
-	monitor = cMonitor();
+## CPU Monitoring thread ##
+def THRTIME_monitoringCPU(tBot):
+	try:
+		monitor = cMonitor();
+		logmon.rateCPU.append(monitor.using_cpurate());
+	except Exception as e:	logger.error(e);
+	finally:	del	monitor;
+
 	try:	del logmon.rateCPU[0];
-	except:	pass;
-	logmon.rateCPU.append(monitor.using_cpurate());
+	except Exception as e:	logger.error(e);
 
 	if(logmon.rateCPU[-1] >= args.overheatcpu or abs(logmon.rateCPU[-1]-logmon.rateCPU[-2]) >= args.diffcpu):
 		logger.warning("  Change in CPU usage is {}%".format(logmon.rateCPU[-1] - logmon.rateCPU[-2]));
-		tele.botSendMessage("*CPU usage is {}%.".format(logmon.rateCPU[-1]));
-		pass;
+		tBot.sendMessage("*CPU usage is {}%.".format(logmon.rateCPU[-1]));
 
-	monThread.append(threading.Timer((args.termonitor * 60), THRTIME_monitoringCPU));
-	monThread[-1].start();
+	logger.debug("  - Set 'THRTIME_monitoringCPU' Thread repet timer.");
+	threading.Timer((args.termonitor * 60), THRTIME_monitoringCPU, args=(tBot,)).start();
+## CPU Monitoring thread ##
 
-def THRTIME_monitoringMEM():
-	monitor = cMonitor();
+## MEMORY Monitoring thread ##
+def THRTIME_monitoringMEM(tBot):
+	try:
+		monitor = cMonitor();
+		mInfo = monitor.using_mem_info();
+		logmon.rateMEM.append(mInfo['physical'].percent);
+	except Exception as e:	logger.error(e);
+	finally:	del	monitor;
+
 	try:	del logmon.rateMEM[0];
-	except:	pass;
-	logmon.rateMEM.append(monitor.using_cpurate());
+	except Exception as e:	logger.error(e);
 
 	if(logmon.rateMEM[-1] >= args.overheatmem or abs(logmon.rateMEM[-1]-logmon.rateMEM[-2]) >= args.diffmem):
 		logger.warning("  Change in MEMORY usage is {}%".format(logmon.rateMEM[-1] - logmon.rateMEM[-2]));
-		tele.botSendMessage("*Memory usage is {}%.".format(logmon.rateMEM[-1]));
-		pass;
+		tBot.sendMessage("*Memory usage is {}%.".format(logmon.rateMEM[-1]));
 
-	monThread.append(threading.Timer((args.termonitor * 60), THRTIME_monitoringMEM));
-	monThread[-1].start();
+	logger.debug("  - Set 'THRTIME_monitoringMEM' Thread repet timer.");
+	threading.Timer((args.termonitor * 60), THRTIME_monitoringMEM, args=(tBot,)).start();
+## MEMORY Monitoring thread ##
 # TIMMER`S FUNCTION #
 
-def TEST():
-	jb = tele.getJob();
-	jb.start();
-	logger.info(jb.jobs());
-	monThread.append(threading.Timer(10, TEST));
-	monThread[-1].start();
+def PRC_botHandle():
+	logger.debug("  * Init Telegram-bot handling process.");
+	tele_bot = cTelegramBot(key=args.teltoken, masters=args.mastertoken, cid=args.chattoken);
+	try:
+		tele_bot.setUpdaterEvent("help",			onCommandHelp);
+		tele_bot.setUpdaterEvent("cpu_info",		onCommandCPUInfo);
+		tele_bot.setUpdaterEvent("cpu_use",			onCommandCPUUse);
+		tele_bot.setUpdaterEvent("mem_use",			onCommandMemoryInfo);
+		tele_bot.setUpdaterEvent("net_info",		onCommandNetInfo);
+		tele_bot.setUpdaterEvent("net_detail",		onCommandNetDetail);
+		tele_bot.setUpdaterEvent("temperature",		onCommandTemperature);
+		tele_bot.setUpdaterEvent("fans",			onCommandFans);
+		tele_bot.setUpdaterEvent("battery",			onCommandBattery);
+		tele_bot.setUpdaterEvent("boottime",		onCommandBoottime);
+		tele_bot.setUpdaterEvent("users",			onCommandConnectedUsers);
+		tele_bot.setUpdaterEvent("process_info",	onCommandProcess);
+
+		tele_bot.setUpdaterEvent("whatismyuserid",	onCommandMyTelegramID);
+		tele_bot.setUpdaterEvent("whatismychatid",	onCommandMyChatroomID);
+	except Exception as e:	logger.debug(e);
+	tele_bot.start();
+	logger.debug("  * Terminate Telegram-bot handling process.");
+	pass;
 
 def terminate(signum, frame):
 	for t in monThread:
 		if(t.is_alive()):	t.cancel();
 	del logmon;
-	del tele;
+	del teleBot;
 	logger.info("Receive Signal {0}.".format(signum));
 	logger.info("Terminating...");
 	sys.exit(signum);
 	pass;
 
+def onCommandHelp2(update: telegram.Update, _: CallbackContext) -> None:
+	if(not tele.botCmdSecure(update)):	return ;
+
+	helpMsg  = "------------ HelP ------------\n";
+	helpMsg += " * CPU 관련\n";
+	helpMsg += "    - 정보		: /cpu_info\n";
+	helpMsg += "    - 사용량		: /cpu_use\n";
+	helpMsg += " * Memory 관련\n";
+	helpMsg += "    - 사용량		: /mem_use\n";
+	helpMsg += " * Disk 관련\n";
+	helpMsg += "    - 정보		: /disk_info\n";
+	helpMsg += "    - 사용량		: /disk_use\n";
+	helpMsg += " * Network 관련\n";
+	helpMsg += "    - 정보		: /net_info\n";
+	helpMsg += "    - 세부정보	: /net_detail\n";
+	helpMsg += " * Process 관련\n";
+	helpMsg += "    - 정보		: /process_info\n";
+	helpMsg += " * 기타\n";
+	helpMsg += "    - 온도		: /temperature\n";
+	helpMsg += "    - 팬			: /fans\n";
+	helpMsg += "    - 배터리		: /battery\n";
+	helpMsg += "    - 부팅 시간	: /boottime\n";
+	helpMsg += "    - 접속자		: /users\n";
+	helpMsg += "------------------------------\n";
+	update.message.reply_text(helpMsg);
+
 def main():
 	#---------- Global ----------#
-	global tele;
 	global logmon;
-	global monThread;
 	#---------- Global ----------#
 
-	monThread = [];
-
-	tele = cTelegramBot(key=args.teltoken, masters=args.mastertoken, cid=args.chattoken);
-
-	#signal.signal(signal.SIGINT, terminate);
-	#signal.signal(signal.SIGTERM, terminate);
+	teleBot = cTelegram(key=args.teltoken, masters=args.mastertoken, cid=args.chattoken);
 
 	if(args.termonitor > 0):
 		logmon = cLogMonitor();
-		THRTIME_monitoringCPU();
-		THRTIME_monitoringMEM();
-		TEST();
+		threading.Thread(target=THRTIME_monitoringCPU, args=(teleBot,)).start();
+		threading.Thread(target=THRTIME_monitoringMEM, args=(teleBot,)).start();
 		pass;
 
 	## MONITORING COMMNAD ##
 	logger.debug("  * Set event handler.");
 
 	try:
-		tele.setUpdaterEvent("help",			onCommandHelp);
+		teleBot.addCommand("help",			onCommandHelp2);
 	except Exception as e:	logger.debug(e);
 	'''
-	tele.setUpdaterEvent("cpu_info",		onCommandCPUInfo);
-	tele.setUpdaterEvent("cpu_use",			onCommandCPUUse);
-	tele.setUpdaterEvent("mem_use",			onCommandMemoryInfo);
-	tele.setUpdaterEvent("net_info",		onCommandNetInfo);
-	tele.setUpdaterEvent("net_detail",		onCommandNetDetail);
-	tele.setUpdaterEvent("temperature",		onCommandTemperature);
-	tele.setUpdaterEvent("fans",			onCommandFans);
-	tele.setUpdaterEvent("battery",			onCommandBattery);
-	tele.setUpdaterEvent("boottime",		onCommandBoottime);
-	tele.setUpdaterEvent("users",			onCommandConnectedUsers);
-	tele.setUpdaterEvent("process_info",	onCommandProcess);
+	teleBot.addCommand("cpu_info",		onCommandCPUInfo);
+	teleBot.addCommand("cpu_use",			onCommandCPUUse);
+	teleBot.addCommand("mem_use",			onCommandMemoryInfo);
+	teleBot.addCommand("net_info",		onCommandNetInfo);
+	teleBot.addCommand("net_detail",		onCommandNetDetail);
+	teleBot.addCommand("temperature",		onCommandTemperature);
+	teleBot.addCommand("fans",			onCommandFans);
+	teleBot.addCommand("battery",			onCommandBattery);
+	teleBot.addCommand("boottime",		onCommandBoottime);
+	teleBot.addCommand("users",			onCommandConnectedUsers);
+	teleBot.addCommand("process_info",	onCommandProcess);
 	## MONITORING COMMNAD ##
 
-	tele.setUpdaterEvent("whatismyuserid",	onCommandMyTelegramID);
-	tele.setUpdaterEvent("whatismychatid",	onCommandMyChatroomID);
+	teleBot.addCommand("whatismyuserid",	onCommandMyTelegramID);
+	teleBot.addCommand("whatismychatid",	onCommandMyChatroomID);
 	'''
 
-	tele.start();
+	teleBot.start_polling();
 	## TELEGRAM SETTING ##
+	logger.debug("* MAIN DONE");
 	pass;
 
 if __name__=='__main__':
@@ -206,12 +203,13 @@ if __name__=='__main__':
 		lHandler.suffix = "log-%Y%m%d";
 	except:
 		lHandler = logging.FileHandler("teleMonitor.logs");
-	lHandler.setFormatter(logging.Formatter("[%(process)d] [%(levelname)s] [%(asctime)s]\t%(message)s"));
+	lHandler.setFormatter(logging.Formatter("[%(process)d/%(processName)s] [%(levelname)s] [%(asctime)s]\t%(message)s"));
 	logger.addHandler(lHandler);
 	logger.setLevel(logging.DEBUG);
 	## LOGGER ##
 
 
+	logger.info('*' * 80);
 	logger.info('*' * 80);
 	logger.info("* - Platform : %s" % args.os);
 	logger.info("* - Secure CMD : %s" % ("True" if args.mastertoken else "False"));
@@ -220,6 +218,7 @@ if __name__=='__main__':
 	logger.info("* - Memory change in %d minutes to notificiation : %.1f%%" % (args.termonitor, args.diffmem));
 	logger.info("* - Notification of overheat CPU usage : %.1f%%" % args.overheatcpu);
 	logger.info("* - Notification of overheat Memory usage : %.1f%%" % args.overheatmem);
+	logger.info('*' * 80);
 	logger.info('*' * 80);
 	logger.info('');
 
@@ -262,9 +261,12 @@ if __name__=='__main__':
 
 				with open("/var/run/teleMonitor.pid", "w") as pid_file:		pid_file.write(str(os.getpid()));
 
-				exit_code = main();
+				try:
+					exit_code = main();
+				except Exception as e:	logger.critical(e);
 				exit(exit_code);
 
 	else:	main();
 	## Daemon ##
+	logger.debug("* __MAIN__ DONE");
 	pass;
