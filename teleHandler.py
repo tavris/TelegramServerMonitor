@@ -1,16 +1,10 @@
 import telegram;
 from telegram.ext import Updater, CommandHandler, CallbackContext;
-
-# TELEGRAM-BOT COMMON ERROR HANDLER #
-def onCommonErrorHandler(update, context):
-	logger.error("Update '%s' cause error '%s'" % update, context);
-# TELEGRAM-BOT COMMON ERROR HANDLER #
+from cMonitor import cMonitor;
 
 # TELEGRAM-BOT COMMAND EVENT HANDLER #
 ## HELP COMMAND CALLBACK ##
 def onCommandHelp(update: telegram.Update, _: CallbackContext) -> None:
-	if(not tele.botCmdSecure(update)):	return ;
-
 	helpMsg  = "------------ HelP ------------\n";
 	helpMsg += " * CPU 관련\n";
 	helpMsg += "    - 정보		: /cpu_info\n";
@@ -35,8 +29,6 @@ def onCommandHelp(update: telegram.Update, _: CallbackContext) -> None:
 	update.message.reply_text(helpMsg);
 
 def onCommandCPUInfo(update: telegram.Update, _: CallbackContext) -> None:
-	if(not tele.botCmdSecure(update)):	return ;
-
 	monitor = cMonitor();
 	mInfo = monitor.cpu_info();
 
@@ -47,8 +39,6 @@ def onCommandCPUInfo(update: telegram.Update, _: CallbackContext) -> None:
 	update.message.reply_text(msg);
 
 def onCommandCPUUse(update: telegram.Update, _: CallbackContext) -> None:
-	if(not tele.botCmdSecure(update)):	return ;
-
 	monitor = cMonitor();
 	mInfo = monitor.using_cpu_info();
 
@@ -59,8 +49,6 @@ def onCommandCPUUse(update: telegram.Update, _: CallbackContext) -> None:
 	update.message.reply_text(msg);
 
 def onCommandMemoryInfo(update: telegram.Update, _: CallbackContext) -> None:
-	if(not tele.botCmdSecure(update)):	return ;
-
 	monitor = cMonitor();
 	mInfo = monitor.using_mem_info();
 
@@ -70,8 +58,6 @@ def onCommandMemoryInfo(update: telegram.Update, _: CallbackContext) -> None:
 	update.message.reply_text(msg);
 
 def onCommandNetInfo(update: telegram.Update, _: CallbackContext) -> None:
-	if(not tele.botCmdSecure(update)):	return ;
-
 	monitor = cMonitor();
 	mInfo = monitor.net_info();
 
@@ -88,8 +74,6 @@ def onCommandNetInfo(update: telegram.Update, _: CallbackContext) -> None:
 	update.message.reply_text(msg);
 
 def onCommandNetDetail(update: telegram.Update, _: CallbackContext) -> None:
-	if(not tele.botCmdSecure(update)):	return ;
-
 	monitor = cMonitor();
 	mInfo = monitor.detail_net_info();
 
@@ -100,8 +84,6 @@ def onCommandNetDetail(update: telegram.Update, _: CallbackContext) -> None:
 	update.message.reply_text(msg);
 
 def onCommandTemperature(update: telegram.Update, _: CallbackContext) -> None:
-	if(not tele.botCmdSecure(update)):	return ;
-
 	monitor = cMonitor();
 	mInfo = monitor.temperature_info();
 
@@ -112,8 +94,6 @@ def onCommandTemperature(update: telegram.Update, _: CallbackContext) -> None:
 	update.message.reply_text(msg);
 
 def onCommandFans(update: telegram.Update, _: CallbackContext) -> None:
-	if(not tele.botCmdSecure(update)):	return ;
-
 	monitor = cMonitor();
 	mInfo = monitor.fans_info();
 
@@ -124,8 +104,6 @@ def onCommandFans(update: telegram.Update, _: CallbackContext) -> None:
 	update.message.reply_text(msg);
 
 def onCommandBattery(update: telegram.Update, _: CallbackContext) -> None:
-	if(not tele.botCmdSecure(update)):	return ;
-
 	monitor = cMonitor();
 	mInfo = monitor.battery_info();
 
@@ -136,8 +114,6 @@ def onCommandBattery(update: telegram.Update, _: CallbackContext) -> None:
 	update.message.reply_text(msg);
 
 def onCommandBoottime(update: telegram.Update, _: CallbackContext) -> None:
-	if(not tele.botCmdSecure(update)):	return ;
-
 	monitor = cMonitor();
 	mInfo = monitor.boot_time();
 
@@ -149,8 +125,6 @@ def onCommandBoottime(update: telegram.Update, _: CallbackContext) -> None:
 	update.message.reply_text(msg);
 
 def onCommandConnectedUsers(update: telegram.Update, _: CallbackContext) -> None:
-	if(not tele.botCmdSecure(update)):	return ;
-
 	monitor = cMonitor();
 	mInfo = monitor.connect_user();
 
@@ -164,8 +138,6 @@ def onCommandConnectedUsers(update: telegram.Update, _: CallbackContext) -> None
 	update.message.reply_text(msg);
 
 def onCommandProcess(update: telegram.Update, _: CallbackContext) -> None:
-	if(not tele.botCmdSecure(update)):	return ;
-
 	monitor = cMonitor();
 	mInfo = monitor.process_info();
 
