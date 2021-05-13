@@ -4,6 +4,7 @@ Server monitoring tool using Telegram.
 
 ![Generic badge](https://img.shields.io/badge/version-1.1-green.svg)
 ![Generic badge](https://img.shields.io/badge/Python-3.6+-blue.svg)
+![Generic badge](https://img.shields.io/badge/License-MPL-2.0-critical.svg)
 
 ## Introduction
 
