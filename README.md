@@ -2,6 +2,8 @@
 
 Server monitoring tool using Telegram.
 
+![Generic badge](https://img.shields.io/badge/{front text}-{rear text}-{color}.svg)
+
 ## Introduction
 
 This is provides server monitoring tool of Telegram. It's compatible with python version 3.6+ and Telegram-Bot library version 13.5+.
