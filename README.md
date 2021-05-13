@@ -18,7 +18,7 @@ Python requires [Python](https://www.python.org/downloads/release/python-369/) 3
 
 Install the dependencies and devDependencies and start the server.
 
-```sh
+```shell
 (required) SU
 cd TelegramServerMonitor
 python3 teleMonitor.py -d
