@@ -151,7 +151,7 @@ if __name__=='__main__':
 		lHandler = logging.FileHandler("teleMonitor.logs");
 	lHandler.setFormatter(logging.Formatter("[%(process)d/%(processName)s] [%(levelname)s] [%(asctime)s]\t%(message)s"));
 	logger.addHandler(lHandler);
-	logger.setLevel(logging.DEBUG);
+	logger.setLevel(logging.INFO);
 	## LOGGER ##
 
 
