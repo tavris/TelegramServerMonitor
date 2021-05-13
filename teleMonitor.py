@@ -63,30 +63,6 @@ def THRTIME_monitoringMEM(tBot):
 ## MEMORY Monitoring thread ##
 # TIMMER`S FUNCTION #
 
-def PRC_botHandle():
-	logger.debug("  * Init Telegram-bot handling process.");
-	tele_bot = cTelegramBot(key=args.teltoken, masters=args.mastertoken, cid=args.chattoken);
-	try:
-		tele_bot.setUpdaterEvent("help",			onCommandHelp);
-		tele_bot.setUpdaterEvent("cpu_info",		onCommandCPUInfo);
-		tele_bot.setUpdaterEvent("cpu_use",			onCommandCPUUse);
-		tele_bot.setUpdaterEvent("mem_use",			onCommandMemoryInfo);
-		tele_bot.setUpdaterEvent("net_info",		onCommandNetInfo);
-		tele_bot.setUpdaterEvent("net_detail",		onCommandNetDetail);
-		tele_bot.setUpdaterEvent("temperature",		onCommandTemperature);
-		tele_bot.setUpdaterEvent("fans",			onCommandFans);
-		tele_bot.setUpdaterEvent("battery",			onCommandBattery);
-		tele_bot.setUpdaterEvent("boottime",		onCommandBoottime);
-		tele_bot.setUpdaterEvent("users",			onCommandConnectedUsers);
-		tele_bot.setUpdaterEvent("process_info",	onCommandProcess);
-
-		tele_bot.setUpdaterEvent("whatismyuserid",	onCommandMyTelegramID);
-		tele_bot.setUpdaterEvent("whatismychatid",	onCommandMyChatroomID);
-	except Exception as e:	logger.debug(e);
-	tele_bot.start();
-	logger.debug("  * Terminate Telegram-bot handling process.");
-	pass;
-
 def terminate(signum, frame):
 	for t in monThread:
 		if(t.is_alive()):	t.cancel();
@@ -96,32 +72,6 @@ def terminate(signum, frame):
 	logger.info("Terminating...");
 	sys.exit(signum);
 	pass;
-
-def onCommandHelp2(update: telegram.Update, _: CallbackContext) -> None:
-	if(not tele.botCmdSecure(update)):	return ;
-
-	helpMsg  = "------------ HelP ------------\n";
-	helpMsg += " * CPU 관련\n";
-	helpMsg += "    - 정보		: /cpu_info\n";
-	helpMsg += "    - 사용량		: /cpu_use\n";
-	helpMsg += " * Memory 관련\n";
-	helpMsg += "    - 사용량		: /mem_use\n";
-	helpMsg += " * Disk 관련\n";
-	helpMsg += "    - 정보		: /disk_info\n";
-	helpMsg += "    - 사용량		: /disk_use\n";
-	helpMsg += " * Network 관련\n";
-	helpMsg += "    - 정보		: /net_info\n";
-	helpMsg += "    - 세부정보	: /net_detail\n";
-	helpMsg += " * Process 관련\n";
-	helpMsg += "    - 정보		: /process_info\n";
-	helpMsg += " * 기타\n";
-	helpMsg += "    - 온도		: /temperature\n";
-	helpMsg += "    - 팬			: /fans\n";
-	helpMsg += "    - 배터리		: /battery\n";
-	helpMsg += "    - 부팅 시간	: /boottime\n";
-	helpMsg += "    - 접속자		: /users\n";
-	helpMsg += "------------------------------\n";
-	update.message.reply_text(helpMsg);
 
 def main():
 	#---------- Global ----------#
@@ -139,10 +89,7 @@ def main():
 	## MONITORING COMMNAD ##
 	logger.debug("  * Set event handler.");
 
-	try:
-		teleBot.addCommand("help",			onCommandHelp2);
-	except Exception as e:	logger.debug(e);
-	'''
+	teleBot.addCommand("help",			onCommandHelp);
 	teleBot.addCommand("cpu_info",		onCommandCPUInfo);
 	teleBot.addCommand("cpu_use",			onCommandCPUUse);
 	teleBot.addCommand("mem_use",			onCommandMemoryInfo);
@@ -158,7 +105,6 @@ def main():
 
 	teleBot.addCommand("whatismyuserid",	onCommandMyTelegramID);
 	teleBot.addCommand("whatismychatid",	onCommandMyChatroomID);
-	'''
 
 	teleBot.start_polling();
 	## TELEGRAM SETTING ##

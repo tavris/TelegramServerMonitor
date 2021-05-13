@@ -79,5 +79,5 @@ class cTelegramUpdater:
 	def	addCommandHandler(self, command, handle, pass_args=False):	self.__updater.dispatcher.add_handler(CommandHandler(command, handle, pass_args=pass_args));
 	def start(self):
 		self.__updater.start_polling();
-		#self.__updater.idle();
+		self.__updater.idle();
 # TELEGRAM BOT ASSIST CLASS #
