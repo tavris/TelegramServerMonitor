@@ -105,6 +105,7 @@ def main():
 
 	teleBot.addCommand("whatismyuserid",	onCommandMyTelegramID);
 	teleBot.addCommand("whatismychatid",	onCommandMyChatroomID);
+	teleBot.addCommand("memclear",          onCommandClearMemory);
 
 	teleBot.start_polling();
 	## TELEGRAM SETTING ##

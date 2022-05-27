@@ -1,4 +1,4 @@
-import telegram;
+import telegram, os;
 from telegram.ext import Updater, CommandHandler, CallbackContext;
 from cMonitor import cMonitor;
 
@@ -160,5 +160,12 @@ def onCommandMyTelegramID(update: telegram.Update, _: CallbackContext) -> None:
 def onCommandMyChatroomID(update: telegram.Update, _: CallbackContext) -> None:
 	msg  = "* Chat title : %s, CID : %s" % (update.message.chat.title, str(update.message.chat.id));
 	update.message.reply_text(msg);
+
+def onCommandClearMemory(update: telegram.Update, _: CallbackContext) -> None:
+        os.system("echo 3 > /proc/sys/vm/drop_caches");
+        os.system("sync")
+        meg = "* Memory clear.";
+        update.message.reply_text(msg);
+
 
 # TELEGRAM-BOT COMMAND EVENT HANDLER #
